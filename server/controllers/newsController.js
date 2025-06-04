@@ -45,4 +45,24 @@ const likeNews=async(req,res)=>{
         res.status(500).json({msg:e});
     }
 }
-module.exports={addNews,getAllNews,likeNews};
+const addComment=async(req,res)=>{
+    try{
+        const newsId=req.params.id;
+        const {text}=req.body;
+        const news=await News.findById(newsId);
+        if(!news){
+            return res.status(404).json({msg:'News Not Found'});
+        }
+        const comment={
+            user:req.user._id,
+            text,
+        }
+        news.comment.unshift(comment);
+        await news.save();
+        res.status(200).json(news.comment);
+    }
+    catch(e){
+        res.status(500).json({msg:e.message});
+    }
+};
+module.exports={addNews,getAllNews,likeNews,addComment};
