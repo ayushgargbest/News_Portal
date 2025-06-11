@@ -14,7 +14,7 @@ const NewsList = () => {
         fetchNews();
     }, []);
     return (
-        <div className='max-w-4xl mx-auto p-4'>
+        <div className='max-w-full mx-auto p-4'>
             <h2 className='text-2xl font-bold mb-4'>
                 {news.map((item) => (
                     <div key={item._id} className='border rounded-lg shadow-md p-4 mb-6 bg-white'>

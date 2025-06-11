@@ -13,7 +13,7 @@ const registerUser=async(req,res)=>{
             return res.status(400).json({msg:'User already exists'});
         }
         const hashedPassword=await bcrypt.hash(password,10);
-        const newUser=User.create({
+        const newUser=await User.create({
             name,
             email,
             password:hashedPassword,
@@ -31,7 +31,7 @@ const loginUser=async(req,res)=>{
         const user=await User.findOne({email});
         if(!user)
         {
-            return res.status(400).json({msg:'Invalid credentials'});
+            return res.status(401).json({msg:'Email galat h'});
         }
         const isMatch=await bcrypt.compare(password,user.password);
         if(!isMatch)
@@ -41,7 +41,7 @@ const loginUser=async(req,res)=>{
         const token = generateToken(user._id);
         res.json({ user, token });
     } catch(e){
-        res.status(500).json({ msg: error.message });
+        res.status(500).json({ msg: e.message });
     }
 };
 module.exports={registerUser,loginUser};
