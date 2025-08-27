@@ -65,4 +65,15 @@ const addComment=async(req,res)=>{
         res.status(500).json({msg:e.message});
     }
 };
-module.exports={addNews,getAllNews,likeNews,addComment};
+const getNewsByCategory = async (req, res) => {
+  try {
+    const { category } = req.params;
+    const newsList = await News.find({ category })
+      .populate("createdBy", "name email")
+      .sort({ createdAt: -1 });
+    res.json(newsList);
+  } catch (e) {
+    res.status(500).json({ msg: e.message });
+  }
+};
+module.exports={addNews,getAllNews,likeNews,addComment,getNewsByCategory};

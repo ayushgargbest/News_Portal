@@ -1,33 +1,213 @@
-import React, { useEffect, useState } from 'react'
-import axios from 'axios';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+
 const NewsList = () => {
-    const [news, setNews] = useState([]);
-    useEffect(() => {
-        const fetchNews = async () => {
-            try {
-                const res = await axios.get('http://localhost:8000/api/news');
-                setNews(res.data);
-            } catch (e) {
-                console.error('Error fetching data', e);
-            }
-        };
-        fetchNews();
-    }, []);
+  const [news, setNews] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchNews = async () => {
+      try {
+        const res = await axios.get("http://localhost:8000/api/news");
+        setNews(res.data);
+      } catch (e) {
+        console.error("Error fetching data", e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchNews();
+  }, []);
+
+  if (loading) {
     return (
-        <div className='max-w-full mx-auto p-4'>
-            <h2 className='text-2xl font-bold mb-4'>
-                {news.map((item) => (
-                    <div key={item._id} className='border rounded-lg shadow-md p-4 mb-6 bg-white'>
-                        <h3 className='text-xl font-semibold mb-2'>{item.title}</h3>
-                        <p className='text-gray-700 mb-3'>{item.content}</p>
-                        {item.imageUrl &&
-                            <img src={item.imageUrl} alt='news' className='max-w-4xl max-h-100 object-cover rounded mb-3'/>
-                        }
-                        <p className='text-sm text-gray-500'>❤️{item.likes.length}</p>
-                    </div>
-                ))}
-            </h2>
+      <div className="bg-gray-50 min-h-screen">
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="text-center">
+            <div className="text-xl text-gray-600">Loading latest news...</div>
+          </div>
         </div>
-    )
-}
-export default NewsList
+      </div>
+    );
+  }
+
+  const featuredNews = news[0];
+  const otherNews = news.slice(1);
+
+  return (
+    <div className="bg-gray-50 min-h-screen">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="border-b-4 border-red-600 mb-8">
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">Latest News</h1>
+          <p className="text-gray-600 pb-4">
+            Stay updated with breaking news and stories
+          </p>
+        </div>
+
+        {news.length === 0 ? (
+          <div className="text-center py-12 bg-white rounded-lg shadow">
+            <div className="text-xl text-gray-600">No news available</div>
+            <p className="text-gray-500 mt-2">Be the first to share a story!</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Main Content */}
+            <div className="lg:col-span-2">
+              {/* Featured Article */}
+              {featuredNews && (
+                <article className="bg-white rounded-lg shadow-lg overflow-hidden mb-8">
+                  <div className="relative">
+                    <span className="absolute top-4 left-4 bg-red-600 text-white px-3 py-1 text-xs font-bold rounded z-10">
+                      FEATURED
+                    </span>
+                    {featuredNews.imageUrl && (
+                      <img
+                        src={featuredNews.imageUrl}
+                        alt={featuredNews.title}
+                        className="w-full h-80 object-cover"
+                      />
+                    )}
+                  </div>
+                  <div className="p-6">
+                    <h2 className="text-3xl font-bold text-gray-900 mb-4 leading-tight hover:text-red-600 cursor-pointer transition-colors">
+                      {featuredNews.title}
+                    </h2>
+                    <p className="text-gray-700 text-lg leading-relaxed mb-4">
+                      {featuredNews.content}
+                    </p>
+                    <div className="flex items-center justify-between text-sm text-gray-500 border-t pt-4">
+                      <div className="flex items-center space-x-4">
+                        <span className="flex items-center space-x-1">
+                          <span className="text-red-500">❤️</span>
+                          <span>{featuredNews.likes?.length || 0}</span>
+                        </span>
+                        <span className="flex items-center space-x-1">
+                          <span>👁️</span>
+                          <span>
+                            {Math.floor(Math.random() * 1000) + 100} views
+                          </span>
+                        </span>
+                      </div>
+                      {featuredNews.createdAt && (
+                        <span>
+                          {new Date(
+                            featuredNews.createdAt
+                          ).toLocaleDateString()}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </article>
+              )}
+
+              {/* Other Articles */}
+              <div className="space-y-6">
+                {otherNews.map((item) => (
+                  <article
+                    key={item._id}
+                    className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+                  >
+                    <div className="md:flex">
+                      {item.imageUrl && (
+                        <div className="md:w-1/3">
+                          <img
+                            src={item.imageUrl}
+                            alt={item.title}
+                            className="w-full h-48 md:h-full object-cover"
+                          />
+                        </div>
+                      )}
+                      <div
+                        className={`p-6 ${
+                          item.imageUrl ? "md:w-2/3" : "w-full"
+                        }`}
+                      >
+                        <h3 className="text-xl font-bold text-gray-900 mb-3 hover:text-red-600 cursor-pointer transition-colors">
+                          {item.title}
+                        </h3>
+                        <p className="text-gray-700 mb-4">{item.content}</p>
+                        <div className="flex items-center justify-between text-sm text-gray-500">
+                          <span className="flex items-center space-x-1">
+                            <span className="text-red-500">❤️</span>
+                            <span>{item.likes?.length || 0} likes</span>
+                          </span>
+                          {item.createdAt && (
+                            <span>
+                              {new Date(item.createdAt).toLocaleDateString()}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+
+            {/* Sidebar */}
+            <div className="lg:col-span-1">
+              {/* Trending */}
+              <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h3 className="text-xl font-bold text-gray-900 mb-4 border-b border-gray-200 pb-2">
+                  🔥 Trending Now
+                </h3>
+                <div className="space-y-4">
+                  {news.slice(0, 5).map((item, index) => (
+                    <div
+                      key={item._id}
+                      className="flex items-start space-x-3 hover:bg-gray-50 p-2 rounded cursor-pointer"
+                    >
+                      <span className="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded flex-shrink-0">
+                        {index + 1}
+                      </span>
+                      <div>
+                        <h4 className="text-sm font-semibold text-gray-900 hover:text-red-600 line-clamp-2">
+                          {item.title}
+                        </h4>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {item.likes?.length || 0} likes
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Categories */}
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <h3 className="text-xl font-bold text-gray-900 mb-4 border-b border-gray-200 pb-2">
+                  📂 Categories
+                </h3>
+                <div className="space-y-2">
+                  {[
+                    "Politics",
+                    "Technology",
+                    "Sports",
+                    "Business",
+                    "Health",
+                    "Entertainment",
+                  ].map((category) => (
+                    <div
+                      key={category}
+                      className="flex justify-between items-center py-2 hover:bg-gray-50 px-2 rounded cursor-pointer"
+                    >
+                      <span className="text-gray-700 hover:text-red-600">
+                        {category}
+                      </span>
+                      <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
+                        {Math.floor(Math.random() * 20) + 5}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default NewsList;
