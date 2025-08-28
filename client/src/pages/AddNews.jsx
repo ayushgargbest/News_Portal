@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
+import DOMPurify from "dompurify";
 
 const AddNews = () => {
   const [formData, setFormData] = useState({
@@ -9,6 +10,9 @@ const AddNews = () => {
     category: "politics",
   });
   const [loading, setLoading] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [showAI, setShowAI] = useState(false);
 
   const categories = [
     { value: "politics", label: "🏛️ Politics" },
@@ -21,6 +25,42 @@ const AddNews = () => {
 
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const generateAIContent = async () => {
+    if (!aiPrompt.trim()) {
+      alert(
+        "Please enter some keywords or description for AI to generate content"
+      );
+      return;
+    }
+    setAiLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.post(
+        "http://localhost:8000/api/news/ai/generate",
+        {
+          prompt: aiPrompt,
+          category: formData.category,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      setFormData((prev) => ({
+        ...prev,
+        content: response.data.content,
+        title: response.data.title || prev.title,
+      }));
+
+      setAiPrompt("");
+      setShowAI(false);
+    } catch (error) {
+      alert("AI generation failed, please try again.");
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -53,12 +93,14 @@ const AddNews = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
-      <div className="max-w-2xl mx-auto px-4">
+      <div className="max-w-4xl mx-auto px-4">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            📝 Publish News Article
+            📝 AI-Powered News Writing
           </h1>
-          <p className="text-gray-600">Share your story with the world</p>
+          <p className="text-gray-600">
+            Create professional articles with AI assistance
+          </p>
         </div>
 
         <form
@@ -104,18 +146,65 @@ const AddNews = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Article Content
-            </label>
-            <textarea
-              name="content"
-              placeholder="Write your news article here..."
-              value={formData.content}
-              onChange={handleChange}
-              rows="10"
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 resize-vertical"
-              required
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Article Content
+              </label>
+              <button
+                type="button"
+                onClick={() => setShowAI(!showAI)}
+                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+              >
+                🤖 AI Writer
+              </button>
+            </div>
+
+            {showAI && (
+              <div className="mb-4 p-4 bg-red-50 rounded-lg border border-red-200">
+                <h3 className="text-lg font-semibold text-red-800 mb-3">
+                  🤖 AI Content Generator
+                </h3>
+                <p className="text-sm text-red-600 mb-3">
+                  Describe your news story or enter keywords, and AI will
+                  generate a professional article for you!
+                </p>
+                <textarea
+                  placeholder="Example: 'New government policy on renewable energy'"
+                  value={aiPrompt}
+                  onChange={(e) => setAiPrompt(e.target.value)}
+                  rows="3"
+                  className="w-full p-3 border border-red-300 rounded-lg focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 mb-3"
+                />
+                <div className="flex space-x-3">
+                  <button
+                    type="button"
+                    onClick={generateAIContent}
+                    disabled={aiLoading}
+                    className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {aiLoading ? "🔄 Generating..." : "✨ Generate Article"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowAI(false)}
+                    className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div
+              className="w-full p-3 border border-gray-300 rounded-lg prose max-w-none"
+              dangerouslySetInnerHTML={{
+                __html: DOMPurify.sanitize(formData.content),
+              }}
             />
+            <div className="mt-2 text-xs text-gray-500">
+              💡 Tip: The AI generates HTML with <b>bold</b>, <i>italic</i>, and{" "}
+              <u>underline</u>
+            </div>
           </div>
 
           <div>
@@ -153,16 +242,9 @@ const AddNews = () => {
               {loading ? "Publishing..." : "🚀 Publish Article"}
             </button>
           </div>
-
-          <div className="text-sm text-gray-500 text-center">
-            <p>
-              📋 Make sure you're logged in as a reporter to publish articles
-            </p>
-          </div>
         </form>
       </div>
     </div>
   );
 };
-
 export default AddNews;
