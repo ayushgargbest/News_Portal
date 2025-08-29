@@ -80,6 +80,20 @@ const getNewsByCategory = async (req, res) => {
 const generateAIContent = async (req, res) => {
   try {
     const { prompt, category } = req.body;
+
+    const enhancedPrompt = `You are a professional news writer. Based on the user prompt: "${prompt}", write a detailed ${category} news article.
+
+IMPORTANT: Return content as properly formatted HTML with:
+- <h2> for main headlines
+- <h3> for subheadings  
+- <p> tags for paragraphs
+- <strong> for bold text
+- <em> for emphasis
+- Proper line breaks and structure
+
+Topic: ${prompt}
+Category: ${category}`;
+
     const aiResponse = await axios.post(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
@@ -87,23 +101,37 @@ const generateAIContent = async (req, res) => {
           {
             parts: [
               {
-                text: `You are an AI that generates ${category} news content. 
-                Based on the user prompt: "${prompt}", write a detailed news article.`,
+                text: enhancedPrompt,
               },
             ],
           },
         ],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 2048,
+        },
       }
     );
 
-    const content =
+    let content =
       aiResponse.data.candidates[0].content.parts[0].text ||
       "No content generated.";
+
+    content = content
+      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+      .replace(/\*(.*?)\*/g, "<em>$1</em>")
+      .replace(/\n\n/g, "</p><p>")
+      .replace(/^### (.*$)/gm, "<h3>$1</h3>")
+      .replace(/^## (.*$)/gm, "<h2>$1</h2>");
+
+    if (!content.startsWith("<")) {
+      content = `<p>${content}</p>`;
+    }
 
     res.json({ content });
   } catch (e) {
     console.error("Gemini API error:", e.response?.data || e.message);
-    res.status(500).json({ msg: e.response?.data || e.message });
+    res.status(500).json({ msg: "AI generation failed. Please try again." });
   }
 };
 

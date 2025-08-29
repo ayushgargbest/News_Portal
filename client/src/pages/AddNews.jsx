@@ -56,8 +56,10 @@ const AddNews = () => {
 
       setAiPrompt("");
       setShowAI(false);
+      alert("✨ AI content generated successfully!");
     } catch (error) {
-      alert("AI generation failed, please try again.");
+      console.error("AI generation error:", error);
+      alert("AI generation failed. Please try again.");
     } finally {
       setAiLoading(false);
     }
