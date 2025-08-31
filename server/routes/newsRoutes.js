@@ -5,7 +5,5 @@ const protect=require('../middlewares/authMiddleware');
 router.post('/',protect,newsController.addNews);
 router.get('/',newsController.getAllNews);
 router.get('/category/:category', newsController.getNewsByCategory);
-router.put('/:id/like',protect,newsController.likeNews);
-router.put('./:id/comment',protect,newsController.addComment);
 router.post('/ai/generate', protect, newsController.generateAIContent);
 module.exports=router;

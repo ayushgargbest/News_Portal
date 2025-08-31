@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import DOMPurify from "dompurify";
 
 const NewsList = () => {
   const [news, setNews] = useState([]);
@@ -19,6 +20,15 @@ const NewsList = () => {
     fetchNews();
   }, []);
 
+  const getPlainTextPreview = (htmlContent, maxLength = 150) => {
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = DOMPurify.sanitize(htmlContent);
+    const textContent = tempDiv.textContent || tempDiv.innerText || "";
+
+    if (textContent.length <= maxLength) return textContent;
+    return textContent.substring(0, maxLength) + "...";
+  };
+
   if (loading) {
     return (
       <div className="bg-gray-50 min-h-screen">
@@ -37,7 +47,6 @@ const NewsList = () => {
   return (
     <div className="bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Header */}
         <div className="border-b-4 border-red-600 mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Latest News</h1>
           <p className="text-gray-600 pb-4">
@@ -52,9 +61,7 @@ const NewsList = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Content */}
             <div className="lg:col-span-2">
-              {/* Featured Article */}
               {featuredNews && (
                 <article className="bg-white rounded-lg shadow-lg overflow-hidden mb-8">
                   <div className="relative">
@@ -73,15 +80,16 @@ const NewsList = () => {
                     <h2 className="text-3xl font-bold text-gray-900 mb-4 leading-tight hover:text-red-600 cursor-pointer transition-colors">
                       {featuredNews.title}
                     </h2>
-                    <p className="text-gray-700 text-lg leading-relaxed mb-4">
-                      {featuredNews.content}
-                    </p>
+
+                    <div
+                      className="text-gray-700 text-lg leading-relaxed mb-4 prose prose-red max-w-none"
+                      dangerouslySetInnerHTML={{
+                        __html: DOMPurify.sanitize(featuredNews.content),
+                      }}
+                    />
+
                     <div className="flex items-center justify-between text-sm text-gray-500 border-t pt-4">
                       <div className="flex items-center space-x-4">
-                        <span className="flex items-center space-x-1">
-                          <span className="text-red-500">❤️</span>
-                          <span>{featuredNews.likes?.length || 0}</span>
-                        </span>
                         <span className="flex items-center space-x-1">
                           <span>👁️</span>
                           <span>
@@ -101,7 +109,6 @@ const NewsList = () => {
                 </article>
               )}
 
-              {/* Other Articles */}
               <div className="space-y-6">
                 {otherNews.map((item) => (
                   <article
@@ -126,12 +133,12 @@ const NewsList = () => {
                         <h3 className="text-xl font-bold text-gray-900 mb-3 hover:text-red-600 cursor-pointer transition-colors">
                           {item.title}
                         </h3>
-                        <p className="text-gray-700 mb-4">{item.content}</p>
+
+                        <p className="text-gray-700 mb-4">
+                          {getPlainTextPreview(item.content)}
+                        </p>
+
                         <div className="flex items-center justify-between text-sm text-gray-500">
-                          <span className="flex items-center space-x-1">
-                            <span className="text-red-500">❤️</span>
-                            <span>{item.likes?.length || 0} likes</span>
-                          </span>
                           {item.createdAt && (
                             <span>
                               {new Date(item.createdAt).toLocaleDateString()}
@@ -145,9 +152,7 @@ const NewsList = () => {
               </div>
             </div>
 
-            {/* Sidebar */}
             <div className="lg:col-span-1">
-              {/* Trending */}
               <div className="bg-white rounded-lg shadow-md p-6 mb-6">
                 <h3 className="text-xl font-bold text-gray-900 mb-4 border-b border-gray-200 pb-2">
                   🔥 Trending Now
@@ -165,16 +170,12 @@ const NewsList = () => {
                         <h4 className="text-sm font-semibold text-gray-900 hover:text-red-600 line-clamp-2">
                           {item.title}
                         </h4>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {item.likes?.length || 0} likes
-                        </p>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Categories */}
               <div className="bg-white rounded-lg shadow-md p-6">
                 <h3 className="text-xl font-bold text-gray-900 mb-4 border-b border-gray-200 pb-2">
                   📂 Categories

@@ -27,6 +27,22 @@ const AddNews = () => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  const cleanAIContent = (content) => {
+    content = content.replace(/```html\s*/gi, "").replace(/```\s*/g, "");
+    content = content.replace(/<!DOCTYPE[^>]*>/gi, "");
+    content = content.replace(/<\/?html[^>]*>/gi, "");
+    content = content.replace(/<head>[\s\S]*?<\/head>/gi, "");
+    content = content.replace(/<\/?body[^>]*>/gi, "");
+    content = content.replace(/<title>[\s\S]*?<\/title>/gi, "");
+    content = content.replace(/<meta[^>]*>/gi, "");
+    content = content.replace(/<p>\s*<p>/g, "<p>");
+    content = content.replace(/<\/p>\s*<\/p>/g, "</p>");
+    content = content.replace(/<p>\s*<h([1-6])>/g, "<h$1>");
+    content = content.replace(/<\/h([1-6])>\s*<\/p>/g, "</h$1>");
+    content = content.replace(/\s+/g, " ");
+    return content.trim();
+  };
+
   const generateAIContent = async () => {
     if (!aiPrompt.trim()) {
       alert(
@@ -48,9 +64,11 @@ const AddNews = () => {
         }
       );
 
+      const cleanedContent = cleanAIContent(response.data.content);
+
       setFormData((prev) => ({
         ...prev,
-        content: response.data.content,
+        content: cleanedContent,
         title: response.data.title || prev.title,
       }));
 
@@ -197,15 +215,34 @@ const AddNews = () => {
               </div>
             )}
 
-            <div
-              className="w-full p-3 border border-gray-300 rounded-lg prose max-w-none"
-              dangerouslySetInnerHTML={{
-                __html: DOMPurify.sanitize(formData.content),
-              }}
+            <div className="border border-gray-300 rounded-lg">
+              <div className="bg-gray-50 px-3 py-2 border-b border-gray-300">
+                <span className="text-sm font-medium text-gray-700">
+                  Content Preview
+                </span>
+              </div>
+              <div
+                className="p-4 min-h-32 prose max-w-none"
+                dangerouslySetInnerHTML={{
+                  __html: DOMPurify.sanitize(
+                    formData.content ||
+                      '<p class="text-gray-400 italic">Your content will appear here...</p>'
+                  ),
+                }}
+              />
+            </div>
+
+            <textarea
+              name="content"
+              value={formData.content}
+              onChange={handleChange}
+              className="hidden"
+              required
             />
+
             <div className="mt-2 text-xs text-gray-500">
-              💡 Tip: The AI generates HTML with <b>bold</b>, <i>italic</i>, and{" "}
-              <u>underline</u>
+              💡 Tip: The AI generates formatted HTML with <b>bold</b>,{" "}
+              <i>italic</i>, and proper headings
             </div>
           </div>
 
@@ -249,4 +286,5 @@ const AddNews = () => {
     </div>
   );
 };
+
 export default AddNews;

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
+import DOMPurify from "dompurify";
 
 const CategoryPage = () => {
   const { category } = useParams();
@@ -53,6 +54,15 @@ const CategoryPage = () => {
   };
 
   const currentCategory = categoryInfo[category] || categoryInfo.politics;
+
+  const getPlainTextPreview = (htmlContent, maxLength = 150) => {
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = DOMPurify.sanitize(htmlContent);
+    const textContent = tempDiv.textContent || tempDiv.innerText || "";
+
+    if (textContent.length <= maxLength) return textContent;
+    return textContent.substring(0, maxLength) + "...";
+  };
 
   useEffect(() => {
     const fetchCategoryNews = async () => {
@@ -136,7 +146,7 @@ const CategoryPage = () => {
                     {item.title}
                   </h3>
                   <p className="text-gray-700 mb-4 line-clamp-3">
-                    {item.content.substring(0, 150)}...
+                    {getPlainTextPreview(item.content, 150)}
                   </p>
                   <div className="flex items-center justify-between text-sm text-gray-500">
                     <span className="flex items-center space-x-1">
